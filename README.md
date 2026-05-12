@@ -107,6 +107,36 @@ npm run dev     # Development server
 - Responsive design for mobile/desktop
 - Error handling and loading states
 - Clean product comparison display
+- **Generative UI**: Format responses as interactive UI components using json-render
+
+## 🎭 Generative UI Integration
+
+The app supports formatting AI responses as interactive UI components instead of plain text:
+
+### How It Works
+
+1. **API Integration**: The `/api/chat` endpoint accepts a `format=ui` parameter
+2. **UI Generation**: Product data is transformed into json-render specifications
+3. **Component Rendering**: UI specs are rendered using pre-defined components (cards, grids, etc.)
+
+### Usage
+
+- Toggle between "Text" and "UI" format in the interface
+- UI format displays products as interactive cards with ratings and features
+- Recommended products are highlighted with special styling
+
+### Technical Implementation
+
+- **Framework**: json-render for safe, constrained UI generation
+- **Components**: Custom ProductCard and ProductGrid components
+- **Styling**: Tailwind CSS with shadcn/ui components
+- **Data Flow**: API response → JSON spec → React components
+
+### Example UI Components
+
+- ProductCard: Displays individual product with title, price, rating, features
+- ProductGrid: Arranges multiple products in a responsive grid
+- Recommendations: Highlights best-value products
 
 ## 🔧 Technical Stack
 
