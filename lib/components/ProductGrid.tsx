@@ -7,6 +7,7 @@ interface Product {
   rating?: string;
   features?: string[];
   isRecommended?: boolean;
+  sourceUrl?: string;
 }
 
 interface ProductGridProps {

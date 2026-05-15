@@ -7,6 +7,7 @@ interface ProductCardProps {
   rating?: string;
   features?: string[];
   isRecommended?: boolean;
+  sourceUrl?: string;
 }
 
 // Simple custom badge component
@@ -19,7 +20,7 @@ function Badge({ children, className }: { children: React.ReactNode; className?:
 }
 
 export function ProductCard(ctx: { props: ProductCardProps }) {
-  const { title, price, rating, features, isRecommended } = ctx.props;
+  const { title, price, rating, features, isRecommended, sourceUrl } = ctx.props;
   return (
     <div className={`relative bg-white border rounded-lg shadow-md p-4 ${isRecommended ? 'border-green-500 border-2' : 'border-gray-200'}`}>
       {isRecommended && (
@@ -47,6 +48,11 @@ export function ProductCard(ctx: { props: ProductCardProps }) {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+      {sourceUrl && (
+        <div className="mt-2 text-sm text-gray-600">
+          Source: <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{sourceUrl}</a>
         </div>
       )}
     </div>
