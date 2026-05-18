@@ -4,9 +4,8 @@ import { streamText } from 'ai';
 import { generatePrompt } from '@/lib/chat/prompts';
 import { generateDemoResponse, parseDemoProducts } from '@/lib/chat/responses';
 import { hasValidApiKeys } from '@/lib/chat/utils';
+import { searchWithTavily, extractWithFirecrawl } from '@/lib/chat/tools';
 import type { MessagePart } from '@/lib/types/chat';
-
-// Note: tavily and firecrawl clients are initialized in the future full implementation
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,7 +23,7 @@ export async function POST(request: NextRequest) {
     const userMessage = fullText.replace(/^FORMAT: \w+\n/, '').trim();
 
     // Check if we have API keys for full functionality
-    const { hasGroq } = hasValidApiKeys();
+    const { hasGroq, hasTavily, hasFirecrawl } = hasValidApiKeys();
 
     let responseText: string;
 
@@ -35,8 +34,22 @@ export async function POST(request: NextRequest) {
       const messages = demoText.split('\n').filter(line => line.trim());
       responseText = JSON.stringify({ messages, products });
     } else {
-      // Full AI implementation
-      const prompt = await generatePrompt(userMessage);
+      // Full AI implementation with real tools
+      let searchResults: any[] = [];
+      let extractSummary = '';
+      if (hasTavily) {
+        try {
+          const raw = await searchWithTavily(userMessage, 5);
+          searchResults = raw.map(r => ({ title: r.title, url: r.url, snippet: (r.content || '').slice(0, 200) }));
+        } catch (e) { console.error('Tavily search failed:', e); }
+      }
+      if (hasFirecrawl && searchResults.length > 0) {
+        try {
+          const data: any = await extractWithFirecrawl(searchResults[0].url);
+          extractSummary = (data.markdown || data.html || '').slice(0, 500);
+        } catch (e) { console.error('Firecrawl extract failed:', e); }
+      }
+      const prompt = await generatePrompt(userMessage, JSON.stringify({ searchResults, extractSummary }));
       const result = await streamText({
         model: groq('llama-3.1-8b-instant'),
         messages: [{ role: 'user', content: prompt }],

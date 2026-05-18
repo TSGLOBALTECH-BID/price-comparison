@@ -2,9 +2,8 @@ import { groq } from '@ai-sdk/groq';
 import { streamText } from 'ai';
 
 export async function generatePrompt(query: string, environmentDetails?: string): Promise<string> {
-  // For the demo, we'll have the LLM do the reasoning in one go
-  // In a full implementation, we'd call tools and stream steps
-  // Note: This is a simulation - in real implementation, you'd call actual APIs for search and scraping.
+  // Real Tavily search + Firecrawl extract results provided in env details when available
+  // LLM uses provided data for accurate product URLs and details
 
   const envSection = environmentDetails ? `Environment details:\n${environmentDetails}\n\n` : '';
 
@@ -14,9 +13,9 @@ Follow this ReAct process:
 
 1. THINK: Analyze the query to extract product type, constraints, and preferences.
 
-2. SEARCH: Use the search tool to find product URLs from Indian e-commerce sites.
+  2. SEARCH: Use the provided Tavily results for product URLs from Indian e-commerce sites.
 
-3. EXTRACT: Scrape data from those URLs to get product details.
+  3. EXTRACT: Use the provided Firecrawl data for product details.
 
 4. COMPARE: Rank the products based on preferences.
 
