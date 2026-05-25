@@ -35,21 +35,35 @@ export async function POST(request: NextRequest) {
       responseText = JSON.stringify({ messages, products });
     } else {
       // Full AI implementation with real tools
+      console.log('userMessage-',userMessage)
       let searchResults: any[] = [];
       let extractSummary = '';
       if (hasTavily) {
         try {
-          const raw = await searchWithTavily(userMessage, 5);
+          const raw = await searchWithTavily(userMessage, 8);
+          console.log('Tavily raw-',raw)
           searchResults = raw.map(r => ({ title: r.title, url: r.url, snippet: (r.content || '').slice(0, 200) }));
         } catch (e) { console.error('Tavily search failed:', e); }
       }
-      if (hasFirecrawl && searchResults.length > 0) {
+
+      // Pick the most product-specific result for Firecrawl extraction (prefer /dp/, /p/itm, /product/)
+      const productLike = searchResults.find(r =>
+        r.url.includes('/dp/') || r.url.includes('/p/itm') || r.url.includes('/product/')
+      );
+      const extractUrl = productLike ? productLike.url : (searchResults[0]?.url);
+      let extractedUrl = extractUrl;
+
+      if (hasFirecrawl && extractUrl) {
         try {
-          const data: any = await extractWithFirecrawl(searchResults[0].url);
+          const data: any = await extractWithFirecrawl(extractUrl);
+          console.log('FireCrawl data-',data)
           extractSummary = (data.markdown || data.html || '').slice(0, 500);
+          // Prefer the canonical URL returned by Firecrawl (exact product page)
+          extractedUrl = data?.metadata?.sourceURL || data?.metadata?.url || extractUrl;
         } catch (e) { console.error('Firecrawl extract failed:', e); }
       }
-      const prompt = await generatePrompt(userMessage, JSON.stringify({ searchResults, extractSummary }));
+      const prompt = await generatePrompt(userMessage, JSON.stringify({ searchResults, extractSummary, extractedUrl }));
+      console.log('Prompt-',prompt)
       const result = await streamText({
         model: groq('llama-3.1-8b-instant'),
         messages: [{ role: 'user', content: prompt }],
