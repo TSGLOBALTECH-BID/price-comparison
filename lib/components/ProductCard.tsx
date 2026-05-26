@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star } from 'lucide-react';
+import { Star, ExternalLink } from 'lucide-react';
 
 interface ProductCardProps {
   title: string;
@@ -51,9 +51,15 @@ export function ProductCard(ctx: { props: ProductCardProps }) {
         </div>
       )}
       {sourceUrl && (
-        <div className="mt-2 text-sm text-gray-600">
-          Source: <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{sourceUrl}</a>
-        </div>
+        <a
+          href={sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+        >
+          View Product
+          <ExternalLink className="w-3.5 h-3.5" />
+        </a>
       )}
     </div>
   );

@@ -9,6 +9,7 @@ export interface Product {
   rating: string;
   features: string[];
   isRecommended: boolean;
+  sourceUrl?: string;
 }
 
 export interface ProductData {

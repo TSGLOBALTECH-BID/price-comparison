@@ -2,58 +2,35 @@ import { groq } from '@ai-sdk/groq';
 import { streamText } from 'ai';
 
 export async function generatePrompt(query: string, environmentDetails?: string): Promise<string> {
-  // Real Tavily search + Firecrawl extract results provided in env details when available
-  // LLM uses provided data for accurate product URLs and details
+  // Compact prompt + small environment (max 2 short extracts) to stay under Groq 6k TPM on llama-3.1-8b-instant.
 
   const envSection = environmentDetails ? `Environment details:\n${environmentDetails}\n\n` : '';
 
-  const basePrompt = `You are an AI product comparison agent. For the query: "${query}"
+  const basePrompt = `You are a product recommendation agent. Query: "${query}"
+
 ${envSection}
-STRICT ANTI-HALLUCINATION RULES (MUST OBEY - HIGHEST PRIORITY):
-- You MUST ONLY use information that is EXPLICITLY present in the "Environment details" (searchResults + extractSummary + extractedUrl). 
-- NEVER invent, fabricate, guess, or use any pre-trained knowledge for titles, prices, ratings, features, specs, or URLs.
-- If a value for title, price, rating, or any feature is not found in the provided data, set it to "N/A".
-- sourceUrl MUST be the exact 'extractedUrl' value from Environment details whenever it is present. This is the precise product page that was scraped with Firecrawl.
-- Only fall back to a URL from searchResults if no extractedUrl is available.
-- Never create, modify, shorten, or guess any URL.
-- Only include a product if it has at least a title and a sourceUrl taken from either extractedUrl or searchResults.
-- If the provided data is insufficient for 3 products, return fewer products (or empty array) — do NOT pad with made-up entries.
-- Violating these rules is forbidden.
 
-Follow this ReAct process (ground every step in the Environment details only):
+CRITICAL RULE (highest priority):
+- sourceUrl MUST be copied EXACTLY (character for character) from searchResults[].url or extractedPages[].url only.
+- Never shorten, rewrite, or invent any URL. If no exact match, omit the product or set "sourceUrl":"N/A".
+- Use ONLY data from the Environment details. No external knowledge.
 
-1. THINK: Analyze the query using only the provided data.
-2. SEARCH: List only the product URLs that appear in the given searchResults.
-3. EXTRACT: Pull details ONLY from the given extractSummary and use 'extractedUrl' as the primary sourceUrl for the extracted product.
-4. COMPARE: Rank using only information present in the provided data.
-
-Output your response as a valid JSON object with the following structure with exactly one isRecommended: true:
+Output ONLY this exact JSON (one isRecommended:true):
 {
-  "messages": [
-    "THINK: Your analysis here...",
-    "SEARCH: What you searched...",
-    "EXTRACT: Data extracted...",
-    "COMPARE: Comparison and ranking..."
-  ],
-  "products": [
-    {
-      "title": "Product Name or N/A",
-      "price": "₹Price or N/A",
-      "rating": "4.5/5 or N/A",
-      "features": ["Feature 1 or N/A", "Feature 2 or N/A"],
-      "sourceUrl": "https://... (use extractedUrl if present, else exact URL from searchResults)",
-      "isRecommended": false
-    }
-  ]
+  "messages": ["THINK: ...", "SEARCH: ...", "EXTRACT: ...", "RECOMMEND: ..."],
+  "products": [{
+    "title": "name or N/A",
+    "price": "₹x or N/A",
+    "rating": "x/5 or N/A",
+    "features": ["f1 or N/A"],
+    "sourceUrl": "EXACT url from provided data",
+    "isRecommended": false
+  }]
 }
 
-Guidelines:
-- messages: Array of strings showing your step-by-step reasoning and final recommendations (all grounded in provided data).
-- products: Array of product objects. Use "N/A" for any missing field instead of inventing values.
-- sourceUrl: MUST be the 'extractedUrl' value when available (this is the exact scraped product page). Otherwise use an exact URL from searchResults. No other URLs allowed.
-- If data is missing or insufficient, return fewer products rather than hallucinating.
-- Ensure the JSON is valid and matches the schema exactly.
-- Make recommendations relevant to the query using ONLY the data supplied above.`;
+Rules: Max 3 products. Only include products with real title + exact sourceUrl from the data.`;
+
+
 
   return basePrompt;
 }
@@ -96,15 +73,13 @@ export async function generateLLMResponse(prompt: string): Promise<string> {
       if (!product.title || !product.price || !product.rating || !Array.isArray(product.features) || typeof product.isRecommended !== 'boolean') {
         throw new Error('Invalid product structure');
       }
-      // Optional: ensure sourceUrl is a valid product URL if present
-      if (product.sourceUrl !== undefined) {
-        if (typeof product.sourceUrl !== 'string') {
-          throw new Error('Invalid product structure: sourceUrl must be a string');
-        }
-        // Ensure it's a full product URL, not just domain
-        if (!product.sourceUrl.includes('/dp/') && !product.sourceUrl.includes('/p/itm') && !product.sourceUrl.includes('/product/')) {
-          throw new Error('Invalid product structure: sourceUrl must be a full product URL');
-        }
+      // sourceUrl is now REQUIRED and must be a real product URL
+      if (!product.sourceUrl || typeof product.sourceUrl !== 'string' || product.sourceUrl === 'N/A') {
+        throw new Error('Invalid product structure: sourceUrl is required and must be a valid URL');
+      }
+      // Ensure it's a full product URL from supported sites (amazon.in, flipkart, etc.)
+      if (!product.sourceUrl.includes('/dp/') && !product.sourceUrl.includes('/p/itm') && !product.sourceUrl.includes('/product/')) {
+        throw new Error('Invalid product structure: sourceUrl must be a full product URL');
       }
     }
   } catch (error) {

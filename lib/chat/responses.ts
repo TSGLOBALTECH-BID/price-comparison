@@ -36,7 +36,7 @@ Found ${recommendations.length + 2} relevant product pages, extracting product d
 📊 Data Extraction:
 Extracting product information from ${recommendations.length} top results...
 
-⚖️ Comparison & Ranking:
+⚖️ Recommendation & Ranking:
 
 🏆 Top Recommendations:
 
@@ -57,7 +57,7 @@ Extracting product information from ${recommendations.length} top results...
 
 💡 Recommendation: ${bestRecommendation.name} offers the best balance of features and stays within your budget.
 
-⚠️ Note: This is a demo response. Configure API keys (GROQ_API_KEY, TAVILY_API_KEY, FIRECRAWL_API_KEY) in .env.local for real AI-powered comparisons.`;
+⚠️ Note: This is a demo response. Configure API keys (GROQ_API_KEY, TAVILY_API_KEY, FIRECRAWL_API_KEY) in .env.local for real AI-powered recommendations.`;
 }
 
 export function parseDemoProducts(query: string = "headphones"): Product[] {

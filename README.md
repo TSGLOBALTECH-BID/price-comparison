@@ -1,13 +1,13 @@
-# AI Product Comparison Agent 🛍️🤖
+# Best Product Recomodation 🛍️🤖
 
-A Next.js-based AI agent that compares products from Indian e-commerce sites using a Modular Agentic Loop architecture.
+A Next.js-based AI agent that recommends the best products from Indian e-commerce sites using a Modular Agentic Loop architecture.
 
 ## 🚀 Features
 
 - **Real-time AI Agent**: Uses ReAct pattern with Groq Llama 3 for reasoning
 - **Product Discovery**: Searches Indian e-commerce sites (Amazon, Flipkart, Croma)
 - **Data Extraction**: Scrapes product details using Firecrawl
-- **Smart Comparison**: Ranks products by price, rating, and features
+- **Smart Recommendations**: Ranks products by price, rating, and features for best matches
 - **Streaming UI**: Real-time thoughts and results display
 - **Free Tier Ready**: Uses free API tiers for development/demo
 
@@ -26,7 +26,7 @@ A Next.js-based AI agent that compares products from Indian e-commerce sites usi
 ### Tool Layer
 - **Tavily**: Product URL discovery (1k free searches)
 - **Firecrawl**: Structured data extraction (500 free credits)
-- **Custom Logic**: Data normalization for consistent comparisons
+- **Custom Logic**: Data normalization for consistent recommendations
 
 ## 🛠️ Setup
 
@@ -59,7 +59,7 @@ A Next.js-based AI agent that compares products from Indian e-commerce sites usi
 The app works without API keys! It provides simulated responses showing:
 - Intent analysis
 - Product discovery simulation
-- Comparison logic
+- Recommendation logic
 - Ranked recommendations
 
 ## 📊 System Flow
@@ -106,7 +106,7 @@ npm run dev     # Development server
 - Real-time streaming of agent thoughts
 - Responsive design for mobile/desktop
 - Error handling and loading states
-- Clean product comparison display
+- Clean product recommendation display
 - **Generative UI**: Format responses as interactive UI components using json-render
 
 ## 🎭 Generative UI Integration

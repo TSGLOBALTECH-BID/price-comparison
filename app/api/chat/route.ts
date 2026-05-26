@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
     const lastMessage = messages[messages.length - 1];
     const fullText = lastMessage?.content || lastMessage?.parts?.find((part: MessagePart) => part.type === 'text')?.text;
 
+    console.log('messages-',messages)
     if (!fullText) {
       return NextResponse.json({ error: 'No message provided' }, { status: 400 });
     }
@@ -37,32 +38,51 @@ export async function POST(request: NextRequest) {
       // Full AI implementation with real tools
       console.log('userMessage-',userMessage)
       let searchResults: any[] = [];
-      let extractSummary = '';
       if (hasTavily) {
         try {
-          const raw = await searchWithTavily(userMessage, 8);
-          console.log('Tavily raw-',raw)
+          const raw = await searchWithTavily(userMessage, 5);
           searchResults = raw.map(r => ({ title: r.title, url: r.url, snippet: (r.content || '').slice(0, 200) }));
         } catch (e) { console.error('Tavily search failed:', e); }
       }
 
-      // Pick the most product-specific result for Firecrawl extraction (prefer /dp/, /p/itm, /product/)
-      const productLike = searchResults.find(r =>
-        r.url.includes('/dp/') || r.url.includes('/p/itm') || r.url.includes('/product/')
-      );
-      const extractUrl = productLike ? productLike.url : (searchResults[0]?.url);
-      let extractedUrl = extractUrl;
+      // Extract from up to 2 best product detail pages (token budget)
+      let extractedPages: Array<{ url: string; summary: string }> = [];
+      if (hasFirecrawl && searchResults.length > 0) {
+        const topProductUrls = searchResults
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .filter((r: any) => r.url && (r.url.includes('/dp/') || r.url.includes('/p/itm') || r.url.includes('/product/')))
+          .slice(0, 2);
 
-      if (hasFirecrawl && extractUrl) {
-        try {
-          const data: any = await extractWithFirecrawl(extractUrl);
-          console.log('FireCrawl data-',data)
-          extractSummary = (data.markdown || data.html || '').slice(0, 500);
-          // Prefer the canonical URL returned by Firecrawl (exact product page)
-          extractedUrl = data?.metadata?.sourceURL || data?.metadata?.url || extractUrl;
-        } catch (e) { console.error('Firecrawl extract failed:', e); }
+        if (topProductUrls.length > 0) {
+          const results = await Promise.allSettled(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            topProductUrls.map(async (r: any) => {
+              try {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const data: any = await extractWithFirecrawl(r.url);
+                const summary = (data.markdown || data.html || '').slice(0, 3000); // reduced for token limit
+                const canonical = data?.metadata?.sourceURL || data?.metadata?.url || r.url;
+                return { url: canonical, summary };
+              } catch (e) {
+                console.error('Firecrawl extract failed for', r.url, e);
+                return null;
+              }
+            })
+          );
+          extractedPages = results
+            .filter((p): p is PromiseFulfilledResult<{ url: string; summary: string }> => p.status === 'fulfilled' && !!p.value)
+            .map(p => p.value);
+        }
       }
-      const prompt = await generatePrompt(userMessage, JSON.stringify({ searchResults, extractSummary, extractedUrl }));
+
+      console.log('Extracted pages count:', extractedPages.length);
+
+      const environment = {
+        searchResults: searchResults.map(r => ({ title: r.title, url: r.url })).slice(0, 5),
+        extractedPages  // max 2 pages × ~1100 chars each + URLs
+      };
+
+      const prompt = await generatePrompt(userMessage, JSON.stringify(environment));
       console.log('Prompt-',prompt)
       const result = await streamText({
         model: groq('llama-3.1-8b-instant'),

@@ -10,6 +10,7 @@ interface Product {
   rating?: string;
   features?: string[];
   isRecommended?: boolean;
+  sourceUrl?: string;
 }
 
 interface ResponseData {
@@ -57,7 +58,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">AI Product Comparison Agent</h1>
+        <h1 className="text-3xl font-bold text-center mb-8">Best Product Recomodation- AI Agent</h1>
 
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex justify-end items-center mb-4 gap-4">
@@ -91,7 +92,7 @@ export default function Home() {
               disabled={isLoading}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              {isLoading ? 'Searching...' : 'Compare'}
+              {isLoading ? 'Searching...' : 'Recommend'}
             </button>
             {isLoading && (
               <button
@@ -116,7 +117,7 @@ export default function Home() {
             <div className="p-4 bg-yellow-100 text-yellow-900 rounded-lg">
               <div className="flex items-center">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-900 mr-2"></div>
-                {format === 'ui' ? 'Generating product recommendations...' : 'Agent is thinking and searching...'}
+                {format === 'ui' ? 'Generating best product recommendations...' : 'Agent is thinking and searching...'}
               </div>
             </div>
           ) : responseData ? (
@@ -140,7 +141,7 @@ export default function Home() {
               )}
             </>
           ) : (
-            <p className="text-gray-500">Enter a product query to start comparison...</p>
+            <p className="text-gray-500">Enter a product query to get recommendations...</p>
           )}
         </div>
       </div>
