@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Best Product Recomodation- AI Agent",
+  title: "Best Product ecommendation- AI Agent",
   description: "AI-powered best product recommendations from Indian e-commerce sites",
 };
 

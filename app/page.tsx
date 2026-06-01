@@ -58,7 +58,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">Best Product Recomodation- AI Agent</h1>
+        <h1 className="text-3xl font-bold text-center mb-8">Best Product Recommendation- AI Agent</h1>
 
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex justify-end items-center mb-4 gap-4">
